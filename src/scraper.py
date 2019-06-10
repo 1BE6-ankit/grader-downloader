@@ -1,5 +1,6 @@
-import urllib.request
 from urllib.parse import urlparse
+
+import urllib.request
 import htmlmin
 import re
 
@@ -25,13 +26,10 @@ class Site:
             exit(1)
 
         # get html content
-
         self.html_content = htmlmin.minify(response.read().decode("utf-8"), \
             remove_empty_space=True)
 
-        # self.html_content = response.read().decode("utf-8");
-
-        print(self.html_content)
+        # self.html_content = response.read().decode("utf-8")
 
 class GraderSite(Site):
     def __init__(self, url):
@@ -42,11 +40,20 @@ class GraderSite(Site):
         self.get_lecture_notes()
 
     def get_lecture_notes(self):
-        # define regex for lecture notes
-        lectur_re = "<tr><td class=\"menutext\">Course Materials:</td>(.*?)</tr>"
-
         # capture
-        lecture_links = re.search(lectur_re, self.html_content).group(1)
+        lecture_html = re.search("<tr><td class=menutext> Course Materials: </td>(.*?)</tr>", \
+            self.html_content).group(1)
+        
+        lecture_lists = re.findall("<li>(.*?)</li>", lecture_html)
+
+        # list to hold elements
+        res_lecture = []
+
+        for each_list in lecture_lists:
+            lecture_links = re.findall("href=(.*?)>(.*?)<\/a>", each_list)
+            res_lecture.append(lecture_links[0])
+
+        self.res_lecture = res_lecture
 
     def get_assignments():
         # TODO: add logic
