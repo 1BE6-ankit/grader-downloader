@@ -3,10 +3,11 @@ from urllib.parse import urlparse
 import urllib.request
 import htmlmin
 import re
+import requests
+import os
 
 class Site:
     def __init__(self, url):
-        # first validate url
         # self.validate_url(url)
         self.url = url
     
@@ -37,24 +38,42 @@ class GraderSite(Site):
 
     def get_all_resources(self):
         Site.get_html_content(self)
-        self.get_lecture_notes()
 
-    def get_lecture_notes(self):
-        # capture
-        lecture_html = re.search("<tr><td class=menutext> Course Materials: </td>(.*?)</tr>", \
-            self.html_content).group(1)
-        
-        lecture_lists = re.findall("<li>(.*?)</li>", lecture_html)
+        # extract links 
+        # lecture = self.res_scraper("Course Materials")
+        lecture = self.res_scraper("Schedule")
+        assignments = self.res_scraper("Assignments")
 
-        # list to hold elements
-        res_lecture = []
+        download_path = "../resources/"
 
-        for each_list in lecture_lists:
-            lecture_links = re.findall("href=(.*?)>(.*?)<\/a>", each_list)
-            res_lecture.append(lecture_links[0])
+        if not os.path.isdir(download_path):
+            os.mkdir(download_path)
+            os.mkdir(download_path+""+"lecture/")
+            os.mkdir(download_path+""+"assignments/")
 
-        self.res_lecture = res_lecture
+        self.download_links(download_path+"lecture/", lecture)
+        self.download_links(download_path+"assignments/", assignments)
 
-    def get_assignments():
-        # TODO: add logic
-        print()
+    def download_links(self, download_path, links):
+        for link in links:
+            content = urllib.request.urlopen(self.url+link[0])            
+            data = content.read()
+            with open(download_path+link[1], 'w+b') as f:
+                f.write(data)
+
+    def res_scraper(self, indentifier):
+        # extract the table holding the links 
+        base_string = "<tr><td class=menutext> {}: <\/td><td class=text>(.*?)</td></tr>".format(indentifier)
+        content_html = re.search(base_string, self.html_content).group(1)
+
+        print(content_html)
+
+        # extracts the link content between <li> </li>
+        content_lists = re.findall("<li>(.*?)</li>", content_html)
+
+        content_res = []
+        for each_list in content_lists:
+            content_links = re.findall("href=(.*?)>(.*?)<\/a>", each_list)
+            content_res.append(content_links[0])
+
+        return content_res

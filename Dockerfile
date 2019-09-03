@@ -1,7 +1,6 @@
 FROM ubuntu:18.04
 
-RUN mkdir -p /tmp/home
-ENV HOME /tmp/home
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y git build-essential clang-6.0 lldb-6.0 cmake \
@@ -10,7 +9,20 @@ RUN apt-get update && apt-get upgrade -y \
 RUN apt-get install -y python3-pip
 
 # grader-downloader specific
-RUN pip3 install htmlmin
+RUN pip3 install htmlmin requests
+
+# add a non root user
+ARG USER_NAME=grader
+ENV USER_NAME=$USER_NAME
+
+RUN adduser $USER_NAME
+RUN mkdir -p /etc/sudoers.d
+RUN echo "$USER_NAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME && \
+    chmod 0440 /etc/sudoers.d/$USER_NAME
+
+RUN chmod -R a+rw /home/$USER_NAME/
+RUN apt-get install -y sudo
+USER $USER_NAME
 
 # docker commands
 # docker build -t grader-downloader . 

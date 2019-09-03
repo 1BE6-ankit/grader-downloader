@@ -6,9 +6,14 @@ from scraper import GraderSite
 grader_url = sys.argv[1] if len(sys.argv)==2 \
     else "https://grader.eecs.jacobs-university.de/courses/320201/2019_1/"
 
-# temp fix
-# grader_url = "file:///home/akoirala/projects/grader-downloader/src/JTSK-320112%20C-Lab%20II.html"
-grader_url = "file:///temp/home/grader/src/JTSK-320112%20C-Lab%20II.html"
+# c
+    # else "https://grader.eecs.jacobs-university.de/courses/320112/2019_1gA/"
+
+# c++
+    #else "https://grader.eecs.jacobs-university.de/courses/320143/2019_1r2/"
+
+# ads
+    #else "https://grader.eecs.jacobs-university.de/courses/320201/2019_1/"
 
 grader = GraderSite(grader_url)
 grader.get_all_resources()
