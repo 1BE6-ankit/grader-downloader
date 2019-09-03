@@ -8,5 +8,5 @@ __pycache__
 
 .bash_history
 scraper.pyc
-resources/
+downloads/
 

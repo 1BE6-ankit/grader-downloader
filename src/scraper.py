@@ -48,16 +48,33 @@ class GraderSite(Site):
         assignments = self.res_scraper(" Assignments: ")
         # assignments = self.res_scraper(" Homework: ")
 
-
-        download_path = "../resources/"
-
-        if not os.path.isdir(download_path):
-            os.mkdir(download_path)
-            os.mkdir(download_path+""+"lecture/")
-            os.mkdir(download_path+""+"assignments/")
+        download_path = "../downloads/"
+        subdir_name = self.create_downloaddirs(download_path)
+        download_path += subdir_name
 
         self.download_links(download_path+"lecture/", lecture)
         self.download_links(download_path+"assignments/", assignments)
+
+        print("Files successfully downloaded at: downloads/" + subdir_name)
+
+    def create_downloaddirs(self, download_path):
+        if not os.path.isdir(download_path):
+            os.mkdir(download_path)
+
+        subdir_counter = 1
+        subdir_name = ""
+        while not subdir_name:
+            if os.path.isdir(download_path+"course"+str(subdir_counter)):
+                subdir_counter += 1
+            else:
+                subdir_name = "course"+str(subdir_counter)+"/"
+
+        download_path += subdir_name
+        os.mkdir(download_path)
+        os.mkdir(download_path+"lecture/")
+        os.mkdir(download_path+"assignments/")
+
+        return subdir_name
 
     def download_links(self, download_path, links):
         for link in links:
