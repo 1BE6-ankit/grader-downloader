@@ -30,8 +30,6 @@ class Site:
         self.html_content = htmlmin.minify(response.read().decode("utf-8"), \
             remove_empty_space=True)
 
-        # self.html_content = response.read().decode("utf-8")
-
 class GraderSite(Site):
     def __init__(self, url):
         Site.__init__(self, url)
@@ -40,13 +38,11 @@ class GraderSite(Site):
         Site.get_html_content(self)
 
         # extract links 
-        lecture = self.res_scraper(" Course Materials: ")
+        lecture_identifier = [" Course Materials: ", "Schedule:"]
+        lecture = self.res_scraper(lecture_identifier)
 
-        # The parameter "Schedule:" should have no spaces
-        # lecture = self.res_scraper("Schedule:")
-
-        assignments = self.res_scraper(" Assignments: ")
-        # assignments = self.res_scraper(" Homework: ")
+        assignment_identifier = [" Assignments: ", " Homework: "]
+        assignments = self.res_scraper(assignment_identifier)
 
         download_path = "../downloads/"
         subdir_name = self.create_downloaddirs(download_path)
@@ -79,8 +75,10 @@ class GraderSite(Site):
     def download_links(self, download_path, links):
         for link in links:
             # There are two scenarios for a download link. 
-            # One condition is that the link may be an absolute directory from the grader url,
-            # OR it is a relative url from the course url. 
+            # 1) One condition is that the link may be an absolute directory from the grader url:
+            #    /courses/320143/2019_1r2/.......
+            # 2) OR it is a relative url from the course url:
+            #    assignments/......
             # Considering these two scenarios, we check if the link is absolute or not
             download_url = self.url+link[0] if not link[0].startswith('/') \
                 else self.url[0:self.url.index("/courses")]+link[0]
@@ -90,23 +88,32 @@ class GraderSite(Site):
             with open(download_path+link[1], 'w+b') as f:
                 f.write(data)
 
-    def res_scraper(self, indentifier):
-        # Normally, each section is defined with a <tr><td class=menutext> ..... </td></tr>
-        # So, we extract this section defined by an additional 'identifier' to extract specific link
-        # section - assignment or lecture
-        base_string = "<tr><td class=menutext>{}<\/td><td class=text>(.*?)<\/td><\/tr><tr><td class=menutext>".format(indentifier)
-        content_html = re.search(base_string, self.html_content).group(1)
+    def res_scraper(self, identifier_list):
 
-        # get all the links. We leave '<' in closing </a> because this anchor tag contains a link 
-        # and a name such as: <a href=SOME_LINK>LINK_TEXT</a>. 
-        # If the '<' in </a> is included, findall cannot extract the LINK_TEXT
-        content_lists = re.findall("<a (.*?)\/a>", content_html)
+        for identifier in identifier_list:
+            content_res = []
 
-        content_res = []
-        for each_list in content_lists:
-            # get the link and the link text. The link text is the file name after the file pointed
-            # by this link is extracted
-            content_links = re.findall("href=(.*?)>(.*?)<", each_list)
-            content_res.append(content_links[0])
+            # Normally, each section is defined with a <tr><td class=menutext> ..... </td></tr>
+            # So, we extract this section defined by an additional 'identifier' to extract specific link
+            # section - assignment or lecture
+            base_string = "<tr><td class=menutext>{}<\/td><td class=text>(.*?)<\/td><\/tr><tr><td class=menutext>".format(identifier)
 
-        return content_res
+            try:
+                # Scrape html based on current identifer. If it is not possible to get the
+                # content using this identifier then, continue the loop with another identifier
+                content_html = re.search(base_string, self.html_content).group(1)
+            except:
+                continue
+
+            # get all the links. We leave '<' in closing </a> because this anchor tag contains a link 
+            # and a name, such as: <a href=SOME_LINK>LINK_TEXT</a>. 
+            # If the '<' in </a> is included, 'findall' function cannot extract the LINK_TEXT
+            content_lists = re.findall("<a (.*?)\/a>", content_html)
+
+            for each_list in content_lists:
+                # get the link and the link text. The link text is the file name after the file pointed
+                # by this link is extracted
+                content_links = re.findall("href=(.*?)>(.*?)<", each_list)
+                content_res.append(content_links[0])
+
+            return content_res
