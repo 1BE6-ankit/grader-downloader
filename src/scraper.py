@@ -82,11 +82,15 @@ class GraderSite(Site):
             # Considering these two scenarios, we check if the link is absolute or not
             download_url = self.url+link[0] if not link[0].startswith('/') \
                 else self.url[0:self.url.index("/courses")]+link[0]
-            
-            content = urllib.request.urlopen(download_url)            
-            data = content.read()
-            with open(download_path+link[1], 'w+b') as f:
-                f.write(data)
+
+            try:
+                content = urllib.request.urlopen(download_url)            
+                data = content.read()
+                with open(download_path+link[1], 'w+b') as f:
+                    f.write(data)
+            except:
+                # link not found
+                pass
 
     def res_scraper(self, identifier_list):
 
